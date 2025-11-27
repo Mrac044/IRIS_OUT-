@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-scikit-learn
-joblib
-python-multipart
-jinja2
-pydantic
