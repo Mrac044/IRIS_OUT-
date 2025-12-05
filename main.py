@@ -1,85 +1,94 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, Form, Cookie
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+import os
+from config import USER_LOGIN, USER_PASSWORD, IMAGE_PATHS
 
 app = FastAPI()
+
+# Настройка шаблонов и статических файлов
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/images", StaticFiles(directory="images"), name="images")
 
 # Импортируем функцию предсказания
 try:
     from model import predict_iris
 except ImportError:
-    # Запасной вариант если импорт не работает
     def predict_iris(sl, sw, pl, pw):
-        return "setosa"  # всегда возвращает setosa для теста
+        return "setosa"
 
-# HTML форма
-HTML_FORM = """
-<html>
-<head>
-    <title>Классификатор Ирисов</title>
-    <style>
-        body { font-family: Arial; max-width: 500px; margin: 50px auto; padding: 20px; }
-        .container { background: #f9f9f9; padding: 20px; border-radius: 10px; }
-        input { width: 100%; padding: 8px; margin: 5px 0; }
-        button { background: #4CAF50; color: white; padding: 10px; border: none; width: 100%; margin-top: 10px; }
-        .result { background: #e8f5e8; padding: 20px; border-radius: 10px; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>🌷 Классификатор Ирисов</h2>
-        <form action="/predict" method="post">
-            Длина чашелистика: <input type="number" step="0.1" name="sl" value="5.1" required><br>
-            Ширина чашелистика: <input type="number" step="0.1" name="sw" value="3.5" required><br>
-            Длина лепестка: <input type="number" step="0.1" name="pl" value="1.4" required><br>
-            Ширина лепестка: <input type="number" step="0.1" name="pw" value="0.2" required><br>
-            <button type="submit">Определить вид</button>
-        </form>
-    </div>
-</body>
-</html>
-"""
+# Функция проверки авторизации
+def is_authenticated(auth_cookie: str = None) -> bool:
+    return auth_cookie == "authorized"
 
+# Главная страница - редирект на авторизацию
 @app.get("/")
-async def home():
-    return HTMLResponse(HTML_FORM)
+async def root():
+    return RedirectResponse("/login")
 
+# Страница авторизации
+@app.get("/login")
+async def login_page(request: Request, error: str = None):
+    return templates.TemplateResponse("login.html", {
+        "request": request,
+        "error": error
+    })
+
+# Обработка авторизации
+@app.post("/login")
+async def login(request: Request, login: str = Form(...), password: str = Form(...)):
+    if login == USER_LOGIN and password == USER_PASSWORD:
+        response = RedirectResponse("/form", status_code=303)
+        response.set_cookie(key="auth", value="authorized")
+        return response
+    else:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "error": "❌ Неверный логин или пароль!"
+        })
+
+# Страница с формой (только для авторизованных)
+@app.get("/form")
+async def form_page(request: Request, auth: str = Cookie(default=None)):
+    if not is_authenticated(auth):
+        return RedirectResponse("/login")
+    
+    return templates.TemplateResponse("form.html", {"request": request})
+
+# Обработка формы предсказания
 @app.post("/predict")
 async def predict(
-    sl: float = Form(...), 
-    sw: float = Form(...), 
-    pl: float = Form(...), 
-    pw: float = Form(...)
+    request: Request,
+    sl: float = Form(...),
+    sw: float = Form(...),
+    pl: float = Form(...),
+    pw: float = Form(...),
+    auth: str = Cookie(default=None)
 ):
+    if not is_authenticated(auth):
+        return RedirectResponse("/login")
+    
     result = predict_iris(sl, sw, pl, pw)
     
-    result_html = f"""
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial; max-width: 500px; margin: 50px auto; padding: 20px; }}
-            .container {{ background: #f9f9f9; padding: 20px; border-radius: 10px; }}
-            .result {{ background: #e8f5e8; padding: 20px; border-radius: 10px; margin: 20px 0; }}
-            a {{ display: block; text-align: center; padding: 10px; background: #4CAF50; color: white; text-decoration: none; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h2>✅ Результат: {result}</h2>
-            <div class="result">
-                <p><strong>Введенные параметры:</strong></p>
-                <p>Длина чашелистика: {sl}</p>
-                <p>Ширина чашелистика: {sw}</p>
-                <p>Длина лепестка: {pl}</p>
-                <p>Ширина лепестка: {pw}</p>
-            </div>
-            <a href="/">← Назад к форме</a>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(result_html)
+    return templates.TemplateResponse("result.html", {
+        "request": request,
+        "result": result,
+        "sl": sl,
+        "sw": sw,
+        "pl": pl,
+        "pw": pw
+    })
 
-# Добавляем возможность запуска напрямую
+# Выход из системы
+@app.get("/logout")
+async def logout():
+    response = RedirectResponse("/login")
+    response.delete_cookie(key="auth")
+    return response
+
+# Запуск приложения
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

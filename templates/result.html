@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результат</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Результат: {{ result }}</h2>
+        
+        <!-- Картинка в зависимости от результата -->
+        <div class="image-container">
+            {% if result == "setosa" %}
+                <img src="/images/setosa.jpg" alt="Ирис setosa" class="iris-image">
+            {% elif result == "versicolor" %}
+                <img src="/images/versicolor.jpg" alt="Ирис versicolor" class="iris-image">
+            {% elif result == "virginica" %}
+                <img src="/images/virginica.jpg" alt="Ирис virginica" class="iris-image">
+            {% else %}
+                <img src="/images/setosa.jpg" alt="Ирис" class="iris-image">
+            {% endif %}
+        </div>
+        
+        <div class="result">
+            <p><strong>Введенные параметры:</strong></p>
+            <p>• Длина чашелистика: {{ sl }}</p>
+            <p>• Ширина чашелистика: {{ sw }}</p>
+            <p>• Длина лепестка: {{ pl }}</p>
+            <p>• Ширина лепестка: {{ pw }}</p>
+        </div>
+        
+        <a href="/form" class="back">← Назад к форме</a>
+    </div>
+</body>
+</html>
