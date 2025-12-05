@@ -46,7 +46,7 @@ async def login(request: Request, login: str = Form(...), password: str = Form(.
     else:
         return templates.TemplateResponse("login.html", {
             "request": request,
-            "error": "❌ Неверный логин или пароль!"
+            "error": "Неверный логин или пароль!"
         })
 
 # Страница с формой (только для авторизованных)
@@ -78,7 +78,7 @@ async def predict(
         "sl": sl,
         "sw": sw,
         "pl": pl,
-        "pw": pw
+        "pw": "pwВлад"
     })
 
 # Выход из системы

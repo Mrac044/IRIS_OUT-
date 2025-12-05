@@ -9,17 +9,9 @@
     <div class="container">
         <h2>Результат: {{ result }}</h2>
         
-        <!-- Картинка в зависимости от результата -->
+        <!-- Картинка из Python -->
         <div class="image-container">
-            {% if result == "setosa" %}
-                <img src="/images/setosa.jpg" alt="Ирис setosa" class="iris-image">
-            {% elif result == "versicolor" %}
-                <img src="/images/versicolor.jpg" alt="Ирис versicolor" class="iris-image">
-            {% elif result == "virginica" %}
-                <img src="/images/virginica.jpg" alt="Ирис virginica" class="iris-image">
-            {% else %}
-                <img src="/images/setosa.jpg" alt="Ирис" class="iris-image">
-            {% endif %}
+            <img src="{{ image_path }}" alt="Ирис {{ result }}" class="iris-image">
         </div>
         
         <div class="result">
