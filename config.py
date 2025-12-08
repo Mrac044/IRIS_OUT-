@@ -8,3 +8,5 @@ IMAGE_PATHS = {
     "versicolor": "/images/versicolor.jpg",
     "virginica": "/images/virginica.jpg"
 }
+
+# ТЫ НЕ СДАШЬ :))))

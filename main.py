@@ -71,7 +71,7 @@ async def predict(
         return RedirectResponse("/login")
     
     result = predict_iris(sl, sw, pl, pw)
-    
+    # ДЛЯ АЛЬТЕРНАТИВНО ОДАРЕННЫХ: ДАННЫЕ СТРОКОВОГО ТИПА ПИШУТСЯ В КАВЫЧКАХ
     return templates.TemplateResponse("result.html", {
         "request": request,
         "result": result,
@@ -92,3 +92,5 @@ async def logout():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    # ДЛЯ ПОДСКАЗОК ПО КОДУ НАПИШИТЕ В КОНСОЛЬ "git log --oneline"
